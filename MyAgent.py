@@ -16,6 +16,78 @@ class NaiveAgent():
     def pickAction(self, reward, obs):
         return self.actions[np.random.randint(len(self.actions))]
 
+class RedAgent():
+    """
+        always eat red creep
+    """
+    
+    def __init__(self,actions):
+        self.action = actions
+
+    def nearIndex(self, gamestate):
+        index = gamestate['creep_dist']['R'].index(min(gamestate['creep_dist']['R']))
+        # print index
+        return index
+
+    def pickAction(self, reward, obs, gamestate):
+        # print reward
+        state = gamestate['creep_pos']['R'][self.nearIndex(gamestate)]
+        if abs(gamestate["player_x"]-state[0]) > abs(gamestate["player_y"]-state[1]):
+            if gamestate["player_x"] <= state[0] :
+                # print "right"
+                return 100
+            elif gamestate["player_x"] > state[0]:
+                # print "left"
+                return 97
+        else:
+            if gamestate["player_y"] <= state[1]:
+                # print "down"
+                return 115
+            elif gamestate["player_y"] > state[1]:
+                # print "up"
+                return 119
+
+class GreedyAgent():
+    """
+        when eat the negative creep, change color
+    """
+
+    def __init__(self,actions):
+        self.action = actions
+        self.colors = ['R','G','Y']
+        self.color = 'R'
+
+    def nearIndex(self, gamestate):
+        index = gamestate['creep_dist'][self.color].index(min(gamestate['creep_dist'][self.color]))
+        # print index
+        return index
+
+    def pickAction(self, reward, obs, gamestate):
+        # print reward
+        # print self.color
+        # if reward != 0:
+            # print "eat creepy:", reward
+        if reward<0:
+            self.colors.remove(self.color)
+            self.color = self.colors[np.random.randint(len(self.colors))]
+            self.colors = ['R','G','Y']
+            # print "change color to", self.color
+        state = gamestate['creep_pos'][self.color][self.nearIndex(gamestate)]
+        if abs(gamestate["player_x"]-state[0]) > abs(gamestate["player_y"]-state[1]):
+            if gamestate["player_x"] <= state[0] :
+                # print "right"
+                return 100
+            elif gamestate["player_x"] > state[0]:
+                # print "left"
+                return 97
+        else:
+            if gamestate["player_y"] <= state[1]:
+                # print "down"
+                return 115
+            elif gamestate["player_y"] > state[1]:
+                # print "up"
+                return 119
+
 
 # preprocessor example
 # def nv_state_preprocessor(state):
@@ -61,7 +133,8 @@ game = WaterWorld()
 p = PLE(game,force_fps=force_fps)
 
 # our Naive agent!
-agent = NaiveAgent(p.getActionSet())
+agent = GreedyAgent(p.getActionSet())
+print "action set: ", p.getActionSet()
 
 # init agent and game.
 p.init()
@@ -76,7 +149,8 @@ for i in range(10):
         p.reset_game()
     while p.game_over() == False:
         obs = p.getScreenRGB()
-        action = agent.pickAction(reward, obs)
+        gamestate = p.getGameState()
+        action = agent.pickAction(reward, obs, gamestate)
         reward = p.act(action) # reward after an action
     score = game.getScore()
     print "Trial no.{:02d} : score {:0.3f}".format(i,score)
