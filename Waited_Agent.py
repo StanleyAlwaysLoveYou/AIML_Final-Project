@@ -84,4 +84,4 @@ for i in range(10):
     print "Trial no.{:02d} : score {:0.3f}".format(i,score)
 
 # Screen Shot
-#     p.saveScreen("screen_capture.png")
+    # p.saveScreen("screen_capture.png")
